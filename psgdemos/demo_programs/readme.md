@@ -16,11 +16,7 @@ ones that demonstrates the features you need.
 
 
 
-<p align="center"><img width="679" height="436" src="screenshot.png"><p>
-
-
-
-
+<p align="center"><img width="679" height="436" src="screenshot.jpg"><p>
 
 
 
@@ -31,7 +27,6 @@ ones that demonstrates the features you need.
 * Browse demo names and search demo source code.
 * Integrates with your favorite editor.
 * Advanced features for advanced users.
-
 
 ## Installation
 
@@ -49,7 +44,7 @@ The latest official release of PySimpleGUI products can be found on PyPI.  To pi
 
 ### Using PIP with GitHub
 
-You can also pip install the PySimpleGUI Applications that are in the PySimpleGUI GitHub account.  The GitHub versions have bug fixes and new programs/features that have not yet been released to PyPI. To directly pip install from that repo:
+You can also pip install the Demo Programs that are in the PySimpleGUI GitHub account.  The GitHub version has bug fixes and new programs/features that have not yet been released to PyPI.  These same Demo Programs can be found in the `psgdemos` repo.  To directly pip install from that repo:
 
 #### If you use the command `python` on your computer to invoke Python (Windows):
 
