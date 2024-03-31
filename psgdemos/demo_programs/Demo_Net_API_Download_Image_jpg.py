@@ -20,10 +20,7 @@ from io import BytesIO
 """
 
 
-sg.theme('black')
-
 # Download the binary file (into a variable, not a local file)
-
 jpg_data = sg.net_download_file_binary(r'https://pysimplegui.net/images/tests/powered-by-pysimplegui-5.jpg')
 
 # Now display a JPG image. It requires converting the image to PNG before using with PySimpleGUI
@@ -33,5 +30,4 @@ with BytesIO() as bio:
     jpg_image.save(bio, format='PNG')
     data = bio.getvalue()
 
-sg.Window('Download JPG', [[sg.Image(data=data)]],
-          use_custom_titlebar=True, titlebar_background_color='black', titlebar_text_color='white').read(close=True)
+sg.Window('Download JPG', [[sg.Image(data=data)]]).read(close=True)

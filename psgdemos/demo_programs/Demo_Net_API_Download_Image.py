@@ -20,6 +20,5 @@ sg.theme('black')
 
 # First the easy case.... display a PNG image
 
-sg.Window('PNG Download', [[sg.Image(sg.net_download_file_binary(r'https://pysimplegui.net/images/tests/powered-by-pysimplegui-5.png'))]],
-          use_custom_titlebar=True, titlebar_background_color='black', titlebar_text_color='white').read(close=True)
+sg.Window('PNG Download', [[sg.Image(sg.net_download_file_binary(r'https://pysimplegui.net/images/tests/powered-by-pysimplegui-5.png'))]]).read(close=True)
 
