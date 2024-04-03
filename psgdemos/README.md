@@ -16,7 +16,7 @@ ones that demonstrates the features you need.
 
 
 
-<p align="center"><img width="679" height="436" src="screenshot.png"><p>
+<p align="center"><img width="679" height="436" src="screenshot.jpg"><p>
 
 
 
