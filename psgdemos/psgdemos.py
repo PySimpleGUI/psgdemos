@@ -14,7 +14,7 @@ import mmap, re
 import warnings
 import PySimpleGUI as sg
 
-version = '5.0.0'
+version = '5.1.0'
 __version__ = version.split()[0]
 
 
@@ -52,6 +52,7 @@ packages_with_weird_names = {'cv2':'opencv-python',
                 
     Versions:
         5.0.0  11-Feb-2024  The NEW Demo Browser for use with PySimpleGUI 5!
+        5.1.0  08-Apr-2024  Several new Demo Programs, updated Matplotlib ping demo, license ver 1.1
                            
     Copyright 2021, 2022, 2023, 2024 PySimpleSoft Inc.
 """

@@ -14,7 +14,7 @@ import mmap, re
 import warnings
 import PySimpleGUI as sg
 
-version = '5.0.0'
+version = '5.1.0'
 __version__ = version.split()[0]
 
 
@@ -51,7 +51,8 @@ packages_with_weird_names = {'cv2':'opencv-python',
     Keeps a "history" of the previously chosen folders to easy switching between projects
                 
     Versions:
-        5.0.0  11.Feb-2024  New release of the Demo Browser for PSG5 specifically
+        5.0.0  11-Feb-2024  The NEW Demo Browser for use with PySimpleGUI 5!
+        5.1.0  08-Apr-2024  Several new Demo Programs, updated Matplotlib ping demo, license ver 1.1
                            
     Copyright 2021, 2022, 2023, 2024 PySimpleSoft Inc.
 """
@@ -687,10 +688,7 @@ def make_window():
               [options_at_bottom, sg.Sizegrip()]]
 
     # --------------------------------- Create Window ---------------------------------
-    # TODO Uncomment when deploy PSG5
-    # window = sg.Window('PSG Demo & Project Browser', layout, finalize=True,  resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_EXIT, auto_save_location=True)
-    # TODO Remove when deploy PSG5
-    window = sg.Window('PSG Demo & Project Browser', layout, finalize=True,  resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_EXIT)
+    window = sg.Window('PSG Demo & Project Browser', layout, finalize=True,  resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_EXIT, auto_save_location=True)
     window.set_min_size(window.size)
 
 
