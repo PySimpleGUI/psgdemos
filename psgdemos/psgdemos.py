@@ -14,7 +14,7 @@ import mmap, re
 import warnings
 import PySimpleGUI as sg
 
-version = '5.1.0'
+version = '5.1.1'
 __version__ = version.split()[0]
 
 

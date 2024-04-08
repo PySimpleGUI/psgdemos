@@ -10,7 +10,7 @@ def readme():
 
 setuptools.setup(
     name="psgdemos",
-    version="5.1.0",
+    version="5.1.1",
     author="PySimpleSoft Inc.",
     description="Installs the full set of PySimpleGUI Demo Programs and the Demo Browser.",
     long_description=readme(),
@@ -40,7 +40,7 @@ setuptools.setup(
     ],
     include_package_data=True,
     package_data={"":
-["*","*.*"]
+["*","*.*","*/*"]
         },
 entry_points={"gui_scripts": [
             "psgdemos=psgdemos.psgdemos:main"
