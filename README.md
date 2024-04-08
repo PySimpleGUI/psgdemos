@@ -41,11 +41,11 @@ The latest official release of PySimpleGUI products can be found on PyPI.  To pi
 
 #### If you use the command `python` on your computer to invoke Python (Windows):
 
-`pip install --upgrade psgdemos`
+`python -m pip install --upgrade psgdemos`
 
 #### If you use the command `python3` on your computer to invoke Python (Linux, Mac):
 
-`pip3 install --upgrade psgdemos`
+`python3 -m pip install --upgrade psgdemos`
 
 ### Using PIP with GitHub
 
