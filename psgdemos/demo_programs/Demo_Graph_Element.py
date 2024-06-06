@@ -23,7 +23,7 @@ except:
 
     You may not redistribute, modify or otherwise use PySimpleGUI or its contents except pursuant to the PySimpleGUI License Agreement.
 """
-ping3=None
+
 if ping3:
     ping_url = 'google.com'
 else:
