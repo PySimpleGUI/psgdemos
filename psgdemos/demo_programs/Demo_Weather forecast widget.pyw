@@ -1,59 +1,90 @@
 #!/usr/bin/env python
+'''
+    Copyright 2018-2026 PySimpleGUI. All rights reserved.
+
+    Licensed under LGPL3
+
+    A 5-day weather forecast desktop widget with an LED clock
+    Use right click menu to set options and location
+
+    Unlike previous version, this one does not require you to register with a weather API to get a key
+'''
+
 import PySimpleGUI as sg
 import datetime
 import calendar
-import forecastio
-
-'''
-    Example of a weather App, using:
-    - DARKSKY
-    - google maps coordinates
-    
-    Copyright 2023 PySimpleSoft, Inc. and/or its licensors. All rights reserved.
-    
-    Redistribution, modification, or any other use of PySimpleGUI or any portion thereof is subject to the terms of the PySimpleGUI License Agreement available at https://eula.pysimplegui.com.
-    
-    You may not redistribute, modify or otherwise use PySimpleGUI or its contents except pursuant to the PySimpleGUI License Agreement.
-'''
+import openmeteo_requests
+import requests_cache
+from retry_requests import retry
+import json
+from urllib.parse import urlencode
+from urllib.request import urlopen, Request
+import sys
 
 
+def zip_to_latlon(zip_code, country="US"):
+    base = "https://nominatim.openstreetmap.org/search"
+    query = {
+        "postalcode": zip_code,
+        "country": country,
+        "format": "json",
+        "limit": 1,
+    }
+    url = base + "?" + urlencode(query)
+    req = Request(url, headers={"User-Agent": "zip-to-latlon-script"})
+    with urlopen(req, timeout=10) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    if not data:
+        return None
+    lat = float(data[0]["lat"])
+    lon = float(data[0]["lon"])
+    return lat, lon
 
-##### CHANGE these settings to match your location... check Google Maps #####
-MY_LOCATION_LAT = 35.000000
-MY_LOCATION_LON = -79.000000
-# MY_LOCATION_LAT = 37.7568
-# MY_LOCATION_LON = -87.1191
-# MY_LOCATION_LAT = 41.5726
-
-# MY_LOCATION_LON = -93.6102
 
 
-##### You need a free dark-sky key. You get 1000 calls a month for free #####
-# *** INSERT YOUR DARKSKY KEY HERE **
-DARKSKY_KEY = "INSERT YOUR DARKSKY KEY HERE!"
 
-
-NUM_COLS = 8                    # Changes number of days in forecast
+NUM_COLS = 5                    # Changes number of days in forecast
 USE_CELCIUS = False
+ALPHA = 0.9                 # Initial alpha until user changes
+
+def weathercode_to_icon(code):
+    if code == 0:
+        return "clear-day"
+    elif code in (1, 2, 3):
+        return "partly-cloudy-day"
+    elif 45 <= code <= 48:
+        return "fog"
+    elif 51 <= code <= 67:
+        return "rain"
+    elif 71 <= code <= 86:
+        return "snow"
+    elif 95 <= code <= 99:
+        return "rain"
+    else:
+        return "cloudy"
+
 
 class GUI():
-    def __init__(self, location):
-        self.api_key = DARKSKY_KEY
-        self.lat = MY_LOCATION_LAT
-        self.lng = MY_LOCATION_LON
+    def __init__(self, location, lat, lon):
+        self.lat = lat
+        self.lng = lon
         self.blink_count = 0
 
-        sg.set_options(border_width=0, text_color='white',
-                       background_color='black', text_element_background_color='black')
+        cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
+        retry_session = retry(cache_session, retries=3, backoff_factor=0.2)
+        self.openmeteo = openmeteo_requests.Client(session=retry_session)
+        alpha = sg.user_settings_get_entry('-alpha-', ALPHA)
+
+        sg.SetOptions(border_width=0, text_color='white', background_color='black', text_element_background_color='black')
 
         # Create clock layout
         clock = [
-            [sg.T('', pad=((220,0),0)),
+            [
              sg.Image(data=ledblank, key='-HOUR1-'),
              sg.Image(data=ledblank, key='-HOUR2-'),
              sg.Image(data=ledblank, key='-COLON-'),
              sg.Image(data=ledblank, key='-MIN1-'),
-             sg.Image(data=ledblank, key='-MIN2-')], ]
+             sg.Image(data=ledblank, key='-MIN2-'), ], ]
 
         # Create the weather columns layout
         weather_cols = []
@@ -65,11 +96,18 @@ class GUI():
                  [sg.T('--', size=(3, 1), justification='center', font='Any 20', key='_low_' + str(i), pad=((10, 0), 3))]])
 
         # Create the overall layout
-        layout = [[sg.Column(clock, background_color='black')],
-                  [sg.Column(weather_cols[x], background_color='black') for x in range(NUM_COLS)] + [sg.T('×',enable_events=True, key='Exit')] + [sg.T('C',enable_events=True, key='-CELCIUS-')],
+        layout = [[sg.Column(clock, background_color='black', justification='c', k='-CLOCK-')],
+                  [sg.Column(weather_cols[x], background_color='black') for x in range(NUM_COLS)] +
+                  [sg.Column([[sg.T('×',enable_events=True, key='Exit')] + [sg.T('C',enable_events=True, key='-CELCIUS-')],
+                  [sg.T('', k='-ZIP-', s=(None, 1))],])]
+                  # [sg.T('×',enable_events=True, key='Exit')] + [sg.T('C',enable_events=True, key='-CELCIUS-')] +
+                  # [sg.T('', k='-ZIP-', s=(None, 1))],
+                  # [sg.P(), sg.T('',  k='-STATUS-', size=(None, 1), font='default 10')],
                   # [sg.RButton('Exit', button_color=('black', 'black'),
                   #             image_data=orangeround, tooltip='close window', pad=((450,0),(10,0)))]
                   ]
+
+        right_click_menu = ['', ['Change Zipcode', 'Change Transparency', [str(x) for x in range(1, 11)],'Edit Me', 'Version', 'Exit']]
 
         # Create the window
         self.window = sg.Window('DarkSky Weather Forecast Widget', layout,
@@ -77,9 +115,9 @@ class GUI():
                            grab_anywhere=True,
                            use_default_focus=False,
                            no_titlebar=True,
-                           alpha_channel=.8,            # set an alpha channel if want transparent
+                           alpha_channel=alpha,            # set an alpha channel if want transparent
                            location=location,
-                           right_click_menu=[[''], ['Edit Me', 'Exit',]],
+                           right_click_menu=right_click_menu,
                             enable_close_attempted_event=True,
                            finalize=True)
 
@@ -105,47 +143,78 @@ class GUI():
         self.colon_elem.Update(data=ledcolon if self.blink_count %2 else ledblank)
         self.blink_count += 1
 
-    def update_weather(self):
-        forecast = forecastio.load_forecast(self.api_key, self.lat, self.lng)
-        daily = forecast.daily()
-        today_weekday = datetime.datetime.today().weekday()
 
-        max_temps = []
-        min_temps = []
-        daily_icons = []
-        for daily_data in daily.data:
-            daily_icons.append(daily_data.d['icon'])
-            max_temps.append(int(daily_data.d['temperatureMax']))
-            min_temps.append(int(daily_data.d['temperatureMin']))
+    def update_weather(self):
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": self.lat,
+            "longitude": self.lng,
+            "daily": ["weathercode", "temperature_2m_max", "temperature_2m_min"],
+            "timezone": "auto",
+        }
+
+        responses = self.openmeteo.weather_api(url, params=params)
+        response = responses[0]
+
+        daily = response.Daily()
+        weathercodes = list(map(int, daily.Variables(0).ValuesAsNumpy()))
+        maxtemps_c = list(map(float, daily.Variables(1).ValuesAsNumpy()))
+        mintemps_c = list(map(float, daily.Variables(2).ValuesAsNumpy()))
+        dailyicons = [weathercode_to_icon(c) for c in weathercodes]
+
+        todayweekday = datetime.datetime.today().weekday()
 
         for i in range(NUM_COLS):
-            day_element = self.window.find_element('_DAY_' + str(i))
-            max_element = self.window.find_element('_high_' + str(i))
-            min_element = self.window.find_element('_low_' + str(i))
-            icon_element = self.window.find_element('-ICON-' + str(i))
-            day_element.Update(calendar.day_abbr[(today_weekday + i) % 7])
-            max_temp = max_temps[i]
-            min_temp = min_temps[i]
-            if USE_CELCIUS:
-                max_temp = int((max_temp-32)/1.8)
-                min_temp = int((min_temp-32)/1.8)
-            max_element.Update(max_temp)
-            min_element.Update(min_temp)
-            icon_data = weather_icon_dict[daily_icons[i]]
-            # sg.Print(icon_data, wait=True)
-            try:
-                icon_element.update(icon_data)
-            except:
-                pass
+            dayelement = self.window.find_element('_DAY_' + str(i))
+            maxelement = self.window.find_element('_high_' + str(i))
+            minelement = self.window.find_element('_low_' + str(i))
+            iconelement = self.window.find_element('-ICON-' + str(i) )
+
+            dayelement.Update(calendar.day_abbr[(todayweekday + i) % 7])
+
+            maxtemp = maxtemps_c[i]
+            mintemp = mintemps_c[i]
+
+            # Open-Meteo returns °C by default
+            if not USE_CELCIUS:
+                maxtemp = (maxtemp * 9.0 / 5.0) + 32.0
+                mintemp = (mintemp * 9.0 / 5.0) + 32.0
+
+            maxelement.Update(int(round(maxtemp)))
+            minelement.Update(int(round(mintemp)))
+
+            icondata = weather_icon_dict.get(dailyicons[i])
+            if icondata is not None:
+                try:
+                    iconelement.update(data=icondata)
+                except Exception:
+                    pass
 
 
 def main():
     global USE_CELCIUS
     # Get the GUI object that is used to update the window
+    zipcode = sg.user_settings_get_entry('-zipcode-')
+    if not zipcode:
+        zipcode = sg.popup_get_text('Enter your zipcode')
+        if zipcode:
+            sg.user_settings_set_entry('-zipcode-', zipcode)  # The line of code to save the position before exiting
+        else:
+            sg.popup_error('Must set a zipcode')
+            sys.exit()
+    my_lat_lon = zip_to_latlon(zipcode, "US")
+    if not my_lat_lon:
+        sg.popup_error(f'Zipcode {zipcode} is not valid')
+        sys.exit()
+    else:
+        my_lat, my_lon = my_lat_lon
+    # MY_LOCATION_LAT = 35.000000
+    # MY_LOCATION_LON = -79.000000
+
     location = sg.user_settings_get_entry('-location-', (None, None))
+    gui = GUI(location, my_lat, my_lon)
 
-    gui = GUI(location)
-
+    gui.window['-ZIP-'].update(zipcode)
     # ---------- EVENT LOOP ----------
     last_update_time = 0
     while True:
@@ -156,11 +225,28 @@ def main():
             break
         elif event == '-CELCIUS-':
             USE_CELCIUS = not USE_CELCIUS
+        elif event == 'Change Zipcode':
+            zip = sg.popup_get_text(f'Current zip code is {zipcode}\nEnter new zipcode')
+            if zip:
+                my_lat_lon = zip_to_latlon(zip, "US")
+                if not my_lat_lon:
+                    sg.popup_error(f'Zipcode {zip} is not valid')
+                else:
+                    zipcode = zip
+                    gui.lat, gui.lng = my_lat_lon
+                    sg.user_settings_set_entry('-zipcode-', zipcode)
+            gui.window['-ZIP-'].update(zipcode)
+            gui.update_weather()
         elif event == 'Edit Me':
             sg.execute_editor(__file__)
+        elif event == 'Version':
+            sg.popup_scrolled(__file__, sg.get_versions(), location=gui.window.current_location(), keep_on_top=True, non_blocking=True)
         elif event == 'Last':
             sg.popup(gui.window.last_right_click_widget)
         # update clock
+        elif event in [str(x) for x in range(1,11)]:
+            gui.window.set_alpha(int(event)/10)
+            sg.user_settings_set_entry('-alpha-', int(event)/10)
         gui.update_clock()
         # update weather once ever 6 hours
         now = datetime.datetime.now()
