@@ -16,7 +16,11 @@ ones that demonstrates the features you need.
 
 
 
-<p align="center"><img width="679" height="436" src="screenshot.jpg"><p>
+<p align="center"><img width="679" height="436" src="screenshot.png"><p>
+
+
+
+
 
 
 
@@ -28,6 +32,7 @@ ones that demonstrates the features you need.
 * Integrates with your favorite editor.
 * Advanced features for advanced users.
 
+
 ## Installation
 
 ### Using PIP with PyPI
@@ -36,15 +41,15 @@ The latest official release of PySimpleGUI products can be found on PyPI.  To pi
 
 #### If you use the command `python` on your computer to invoke Python (Windows):
 
-`pip install --upgrade psgdemos`
+`python -m pip install --upgrade psgdemos`
 
 #### If you use the command `python3` on your computer to invoke Python (Linux, Mac):
 
-`pip3 install --upgrade psgdemos`
+`python3 -m pip install --upgrade psgdemos`
 
 ### Using PIP with GitHub
 
-You can also pip install the Demo Programs that are in the PySimpleGUI GitHub account.  The GitHub version has bug fixes and new programs/features that have not yet been released to PyPI.  These same Demo Programs can be found in the `psgdemos` repo.  To directly pip install from that repo:
+You can also pip install the PySimpleGUI Applications that are in the PySimpleGUI GitHub account.  The GitHub versions have bug fixes and new programs/features that have not yet been released to PyPI. To directly pip install from that repo:
 
 #### If you use the command `python` on your computer to invoke Python (Windows):
 
@@ -88,14 +93,9 @@ These steps create a shortcut in the same folder as the target file. You can now
 
 ## License & Copyright
 
-Copyright 2023-2024 PySimpleSoft, Inc. and/or its licensors.
+Copyright 2018-2026 PySimpleGUI.  All rights reserved.
 
-This is a free-to-use "Utility" and is licensed under the
-PySimpleGUI License Agreement, a copy of which is included in the
-license.txt file and also available at https://pysimplegui.com/eula.
-
-Please see Section 1.2 of the license regarding the use of this Utility,
-and see https://pysimplegui.com/faq for any questions.
+Licensed under LGPL3
 
 
 ## Contributing
